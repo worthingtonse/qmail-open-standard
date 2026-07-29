@@ -14,23 +14,27 @@ QMail is an **umbrella** standard that depends on three **independently-versione
 sub-standards. QMail references them by ID + version (e.g. `CBDF/1.0`) and does not
 inline them, so each versions on its own cadence.
 
-| ID   | Name                           | Spec                              | Role                                |
-|------|--------------------------------|-----------------------------------|-------------------------------------|
-| QMail| QMail                          | [specs/qmail-1.0.md](specs/qmail-1.0.md) | Umbrella email system        |
-| RKE  | Raida Key Exchange             | [specs/rke-1.0.md](specs/rke-1.0.md)     | Key exchange / trust         |
-| DRD  | Distributed Resource Directory | [specs/drd-1.0.md](specs/drd-1.0.md)     | Locating / addressing        |
-| CBDF | Compact Binary Document Format | [specs/cbdf-1.0.md](specs/cbdf-1.0.md)   | Binary HTML/CSS replacement; encoding foundation |
+| ID   | Name                           | Spec                              | Role                                | Wire |
+|------|--------------------------------|-----------------------------------|-------------------------------------|------|
+| QMail| QMail                          | [specs/qmail-1.0.md](specs/qmail-1.0.md) | Umbrella email system        | — |
+| RKE  | Raida Key Exchange             | [specs/rke-1.0.md](specs/rke-1.0.md)     | Remote key establishment (RAIDA Group 15) | RAIDA, big-endian |
+| DRD  | Distributed Resource Directory | [specs/drd-1.0.md](specs/drd-1.0.md)     | Locating / addressing        | RAIDA (TBD) |
+| CBDF | Compact Binary Document Format | [specs/cbdf-1.0.md](specs/cbdf-1.0.md)   | Binary HTML/CSS replacement; document encoding | little-endian |
 
 ```
-        QMail/1.0
-        /   |   \
-     RKE   DRD   (all message/wire encoding)
-       \    |    /
-        CBDF/1.0   ← foundation: everything encodes with this
+                 QMail/1.0  (composes the three below)
+                /     |      \
+   CBDF/1.0          RKE/1.0            DRD/1.0
+ (document          (RAIDA key         (directory /
+  encoding,          exchange,          addressing)
+  little-endian)     big-endian)
 ```
 
-**CBDF is the foundation** — RKE, DRD, and QMail all encode through it, so it is
-drafted first.
+**Two distinct wire worlds.** CBDF is the *document* encoding (little-endian). RKE
+(and DRD) are RAIDA *network protocol* command groups on the RAIDA big-endian wire —
+they are **not** CBDF-encoded. QMail composes both and converts at the boundary. CBDF
+was drafted first because QMail's message bodies are CBDF documents; RKE/DRD are
+independent network services.
 
 ## Repository layout
 
