@@ -1,0 +1,35 @@
+QMail Open Standard — Document License
+======================================
+
+SPDX-License-Identifier: CC-BY-4.0
+
+All documentation text in this repository — including everything under specs/,
+registries/, and all Markdown (*.md) files EXCEPT source code and the contents
+of reference-impl/ — is licensed under the
+
+    Creative Commons Attribution 4.0 International License (CC BY 4.0).
+
+You are free to share (copy and redistribute in any medium or format) and adapt
+(remix, transform, and build upon the material) for any purpose, even
+commercially, provided you give appropriate credit, provide a link to the
+license, and indicate if changes were made.
+
+Copyright (c) 2026 Sean Worthington and QMail Open Standard contributors.
+
+Canonical legal text:
+    https://creativecommons.org/licenses/by/4.0/legalcode
+
+Human-readable summary (not a substitute for the license):
+    https://creativecommons.org/licenses/by/4.0/
+
+-------------------------------------------------------------------------------
+SCAFFOLD NOTE (remove before 1.0): This file declares the license via its SPDX
+identifier and canonical URL. Before publishing 1.0, vendor the full CC BY 4.0
+legal code into this file verbatim so the repository is self-contained and does
+not depend on an external URL remaining reachable.
+-------------------------------------------------------------------------------
+
+Note on implementation rights: CC BY 4.0 does NOT grant patent rights. The right
+to IMPLEMENT the standards in this repository is granted separately and
+royalty-free — see the PATENTS file. Code in reference-impl/ is licensed under
+Apache-2.0 — see reference-impl/LICENSE.

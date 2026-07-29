@@ -1,0 +1,53 @@
+QMail Open Standard — Royalty-Free Patent Grant
+===============================================
+
+Version: 1.0-draft
+Applies to: the QMail, RKE, DRD, and CBDF specifications published in this
+repository (the "Specifications").
+
+PURPOSE
+-------
+An open standard is only open if anyone may implement it without paying for
+patent rights. This document provides that assurance. The CC BY 4.0 license in
+LICENSE-DOC covers copying and adapting the document TEXT; it does not grant
+patent rights. This file does.
+
+GRANT
+-----
+Each Contributor to the Specifications hereby grants to any party a perpetual,
+worldwide, non-exclusive, no-charge, royalty-free, irrevocable (except as stated
+below) license under the Contributor's Essential Claims to make, have made, use,
+sell, offer for sale, import, and otherwise implement conforming implementations
+of the Specifications.
+
+"Essential Claims" are those patent claims that a Contributor owns or controls
+and that are necessarily infringed by implementing the required (normative,
+"MUST"/"SHALL") portions of a published version of the Specifications, where
+there is no commercially reasonable non-infringing way to implement those
+required portions. Essential Claims do NOT include claims that would be
+infringed only by (a) optional features, (b) enabling technology not itself
+described in the Specifications, or (c) implementing something the
+Specifications do not require.
+
+This is a Reasonable And Non-Discriminatory, royalty-free (RAND-Z / RF) grant:
+available to all implementers on the same terms, at no charge.
+
+DEFENSIVE TERMINATION
+---------------------
+The grant above to any party terminates automatically if that party initiates
+patent litigation (including a cross-claim or counterclaim) against any other
+party alleging that a conforming implementation of the Specifications infringes
+that party's patents.
+
+NO OTHER RIGHTS
+---------------
+No rights are granted by this file other than the patent license expressly
+stated above. In particular it grants no trademark rights and no copyright
+license (see LICENSE-DOC for the document copyright license).
+
+-------------------------------------------------------------------------------
+SCAFFOLD NOTE (resolve before 1.0): This is a drafting template, not legal
+advice. Have counsel review the final wording — in particular the definition of
+"Contributor," how contributions are bound to this grant (see CONTRIBUTING.md /
+DCO or CLA decision), and the defensive-termination scope — before tagging 1.0.
+-------------------------------------------------------------------------------
