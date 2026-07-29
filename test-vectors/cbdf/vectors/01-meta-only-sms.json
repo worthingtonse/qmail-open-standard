@@ -1,0 +1,42 @@
+{
+  "vector": "meta-only-sms",
+  "spec_ref": "CBDF/1.0 \u00a74.1 (meta-only), \u00a74.3",
+  "description": "Ultra-compact SMS-class document: Meta section only (key 33=1), no FS markers or other sections follow. The visible message rides in key 2 (Subject) because there is no Text section.",
+  "encoding": "little-endian",
+  "length_bytes": 46,
+  "bytes_hex": "07000001021e010121010102094f6e206d792077617913070006012a0000000d0700060164000000190400b3696a",
+  "annotated": [
+    {
+      "hex": "07 00",
+      "field": "Meta pair count = 7 (LE)"
+    },
+    {
+      "hex": "00 01 02",
+      "field": "key 0 Meta File Type, len 1, = 2 (sms)"
+    },
+    {
+      "hex": "1E 01 01",
+      "field": "key 30 Version, len 1, = 1 (Phase II)"
+    },
+    {
+      "hex": "21 01 01",
+      "field": "key 33 EOF Flag, len 1, = 1 (meta-only)"
+    },
+    {
+      "hex": "02 09 4F 6E 20 6D 79 20 77 61 79",
+      "field": "key 2 Subject, len 9, = \"On my way\""
+    },
+    {
+      "hex": "13 07 00 06 01 2A 00 00 00",
+      "field": "key 19 From mailbox (group 00 06, denom 1, serial 42 LE)"
+    },
+    {
+      "hex": "0D 07 00 06 01 64 00 00 00",
+      "field": "key 13 To mailbox (serial 100 LE)"
+    },
+    {
+      "hex": "19 04 00 B3 69 6A",
+      "field": "key 25 Timestamp, len 4, = 1785312000 (0x6A69B300 LE)"
+    }
+  ]
+}

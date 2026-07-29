@@ -1,0 +1,66 @@
+{
+  "vector": "phase2-minimal-document",
+  "spec_ref": "CBDF/1.0 \u00a74.1, \u00a74.3.2, \u00a74.4 (\u00a79 minimum styles), \u00a74.5",
+  "description": "Smallest well-formed Phase II document: generic Meta with version=1, the 14-byte minimum Styles section, an empty STX/ETX Text body, and the canonical empty Resources and Logic tails (FS + 0x00000000).",
+  "encoding": "little-endian",
+  "length_bytes": 44,
+  "bytes_hex": "02000001001e01011c0e00000000001d1d1d1d1d1d1d1d1d1d1d1d1c0200000002031c000000001c00000000",
+  "annotated": [
+    {
+      "hex": "02 00",
+      "field": "Meta pair count = 2"
+    },
+    {
+      "hex": "00 01 00",
+      "field": "key 0 Meta File Type = 0 (generic)"
+    },
+    {
+      "hex": "1E 01 01",
+      "field": "key 30 Version = 1 (Phase II)"
+    },
+    {
+      "hex": "1C",
+      "field": "FS \u2014 section separator"
+    },
+    {
+      "hex": "0E 00 00 00",
+      "field": "Styles length = 14 (LE)"
+    },
+    {
+      "hex": "00 00",
+      "field": "LayoutID = 0x0000 (compatibility page, single main flow)"
+    },
+    {
+      "hex": "1D 1D 1D 1D 1D 1D 1D 1D 1D 1D 1D 1D",
+      "field": "GS \u00d7 12 \u2014 twelve empty style sub-tables"
+    },
+    {
+      "hex": "1C",
+      "field": "FS"
+    },
+    {
+      "hex": "02 00 00 00",
+      "field": "Text length = 2 (LE)"
+    },
+    {
+      "hex": "02 03",
+      "field": "STX ETX \u2014 empty body"
+    },
+    {
+      "hex": "1C",
+      "field": "FS"
+    },
+    {
+      "hex": "00 00 00 00",
+      "field": "Resources length = 0 (empty tail, canonical)"
+    },
+    {
+      "hex": "1C",
+      "field": "FS"
+    },
+    {
+      "hex": "00 00 00 00",
+      "field": "Logic length = 0 (MUST be 0 in Phase II)"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "vector": "phase1-body-object",
+  "spec_ref": "CBDF/1.0 \u00a73, \u00a74.2 (version 0), \u00a75 (QMail file_type=1 body)",
+  "description": "Backward-compatible Phase I body object. Detected by the absence of Meta key 30. A tolerant decoder must accept this exact shape.",
+  "encoding": "little-endian",
+  "length_bytes": 16,
+  "bytes_hex": "1c1c0248656c6c6f2c20776f726c642e",
+  "annotated": [
+    {
+      "hex": "1C 1C",
+      "field": "FS FS \u2014 empty Styles slot (Phase I has no length prefixes)"
+    },
+    {
+      "hex": "02",
+      "field": "STX \u2014 start of text body"
+    },
+    {
+      "hex": "48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 2E",
+      "field": "\"Hello, world.\" (UTF-8; runs to EOF, ETX not required)"
+    }
+  ]
+}

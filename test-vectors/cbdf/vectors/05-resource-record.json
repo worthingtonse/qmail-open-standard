@@ -1,0 +1,30 @@
+{
+  "vector": "resource-record",
+  "spec_ref": "CBDF/1.0 \u00a74.8",
+  "description": "A Resources section holding one packed record (no count field, no separators). The parser walks records until the section length is exhausted. Per-record overhead is 6 bytes.",
+  "encoding": "little-endian",
+  "length_bytes": 14,
+  "bytes_hex": "0a000000000004000000deadbeef",
+  "annotated": [
+    {
+      "hex": "0A 00 00 00",
+      "field": "Resources length = 10 (LE)"
+    },
+    {
+      "hex": "00",
+      "field": "Resource ID = 0"
+    },
+    {
+      "hex": "00",
+      "field": "Resource Type = 0 (image/png)"
+    },
+    {
+      "hex": "04 00 00 00",
+      "field": "Data length = 4 (LE)"
+    },
+    {
+      "hex": "DE AD BE EF",
+      "field": "raw resource bytes (stand-in payload)"
+    }
+  ]
+}

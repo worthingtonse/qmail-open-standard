@@ -1,0 +1,156 @@
+{
+  "vector": "colors-r5g6b5",
+  "spec_ref": "CBDF/1.0 \u00a74.6",
+  "description": "R5G6B5 reference colors (2-byte LE on the wire) with decode-back, plus the five reserved transparency codes and their alpha. Encoders converting RGB->565 must divert any result in 0x000C-0x0010 to 0x0011.",
+  "encoding": "little-endian",
+  "colors": [
+    {
+      "name": "Black",
+      "rgb8_in": [
+        0,
+        0,
+        0
+      ],
+      "r5g6b5": "0x0000",
+      "le_bytes": "00 00",
+      "rgb8_decoded": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "White",
+      "rgb8_in": [
+        255,
+        255,
+        255
+      ],
+      "r5g6b5": "0xFFFF",
+      "le_bytes": "FF FF",
+      "rgb8_decoded": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "Pure Red",
+      "rgb8_in": [
+        255,
+        0,
+        0
+      ],
+      "r5g6b5": "0xF800",
+      "le_bytes": "00 F8",
+      "rgb8_decoded": [
+        255,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Pure Green",
+      "rgb8_in": [
+        0,
+        255,
+        0
+      ],
+      "r5g6b5": "0x07E0",
+      "le_bytes": "E0 07",
+      "rgb8_decoded": [
+        0,
+        255,
+        0
+      ]
+    },
+    {
+      "name": "Pure Blue",
+      "rgb8_in": [
+        0,
+        0,
+        255
+      ],
+      "r5g6b5": "0x001F",
+      "le_bytes": "1F 00",
+      "rgb8_decoded": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "name": "Yellow",
+      "rgb8_in": [
+        255,
+        255,
+        0
+      ],
+      "r5g6b5": "0xFFE0",
+      "le_bytes": "E0 FF",
+      "rgb8_decoded": [
+        255,
+        255,
+        0
+      ]
+    },
+    {
+      "name": "Cyan",
+      "rgb8_in": [
+        0,
+        255,
+        255
+      ],
+      "r5g6b5": "0x07FF",
+      "le_bytes": "FF 07",
+      "rgb8_decoded": [
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "Magenta",
+      "rgb8_in": [
+        255,
+        0,
+        255
+      ],
+      "r5g6b5": "0xF81F",
+      "le_bytes": "1F F8",
+      "rgb8_decoded": [
+        255,
+        0,
+        255
+      ]
+    }
+  ],
+  "transparency_codes": [
+    {
+      "code": "0x000C",
+      "alpha": 0.0,
+      "meaning": "100% transparent"
+    },
+    {
+      "code": "0x000D",
+      "alpha": 0.2,
+      "meaning": "80% transparent"
+    },
+    {
+      "code": "0x000E",
+      "alpha": 0.4,
+      "meaning": "60% transparent"
+    },
+    {
+      "code": "0x000F",
+      "alpha": 0.6,
+      "meaning": "40% transparent"
+    },
+    {
+      "code": "0x0010",
+      "alpha": 0.8,
+      "meaning": "20% transparent"
+    }
+  ],
+  "reserved_safe_code": "0x0011"
+}

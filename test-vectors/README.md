@@ -18,5 +18,11 @@ One subdirectory per standard:
 - Prefer a machine-readable format (e.g. hex input + hex expected output, plus a
   human-readable description) so conformance harnesses can consume them directly.
 
-> TODO: decide the vector file format (e.g. JSON with hex fields, or `.cbdf`
-> binary + `.expected` pairs) and document it here before writing the first vector.
+## Vector format
+
+Settled with the first CBDF set: **JSON, one object per vector**, with a continuous
+lowercase `bytes_hex` string plus an `annotated` byte-by-byte breakdown (and
+purpose-specific fields where a raw byte string doesn't fit). Each standard's
+subdirectory documents its own files and ships a `generate.py` that emits the JSON and
+`assert`s the non-trivial values, so regenerating doubles as a conformance smoke test.
+See [`cbdf/README.md`](cbdf/README.md) for the worked example.

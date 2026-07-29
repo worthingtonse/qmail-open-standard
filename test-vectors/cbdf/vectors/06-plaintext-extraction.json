@@ -1,0 +1,10 @@
+{
+  "vector": "plaintext-extraction",
+  "spec_ref": "CBDF/1.0 \u00a74.5.2",
+  "description": "A styled Text body (text style, URL link, image, a 2x2 table, a paragraph break) and its plain-text extraction. Strict keeps bytes >=0x20 plus TAB/LF and skips each control's self-delimiting payload. Degraded additionally maps table US->TAB, RS->newline, PARA_BREAK->blank line.",
+  "encoding": "little-endian",
+  "text_body_hex": "02110048656c6c6f200e000b6578616d706c652e636f6d736974650f20616e642016000a1300411f421e431f44170b4279651403",
+  "text_body_annotated": "02 11 00 48 65 6C 6C 6F 20 0E 00 0B 65 78 61 6D 70 6C 65 2E 63 6F 6D 73 69 74 65 0F 20 61 6E 64 20 16 00 0A 13 00 41 1F 42 1E 43 1F 44 17 0B 42 79 65 14 03",
+  "expected_plain_strict": "Hello site and \nABCDBye",
+  "expected_plain_degraded": "Hello site and \nA\tB\nC\tD\n\nBye"
+}
