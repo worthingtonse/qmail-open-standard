@@ -225,20 +225,177 @@ Mailbox fields (To/CC/From/Verified Sender) are exactly **7 bytes**:
 `[Coin Group: 2][Denomination: 1][Serial Number: 4 LE]`. CloudCoin mailboxes MUST
 encode the coin-group field as bytes `00 06`.
 
-### 4.4 Styles section (structural summary — full port pending)
+### 4.4 Styles section
 
-The Styles section begins with a **2-byte LayoutID** (selecting a predefined page
-layout from the catalogue) followed by up to **11 style sub-tables**, separated by GS
-(`0x1D`), each holding **packed** fixed-stride records (a header gives count and tier,
-so the parser knows the exact stride — no separators between records). Sub-tables
-cover text styles, containers (background/border/shadow), nav bars, tables, and Image
-Definitions, among others. Records use tiered layouts (base/rare tiers) and reference
-the color and font systems (§4.6, §4.7).
+Framing (after the FS that ends Meta):
 
-> **TODO (next expansion):** port the full sub-table record formats, tiers, and the
-> layout catalogue from source docs `03-styles-section` and `10-layout-catalog`,
-> including the pane-index model, mobile layout pairs, and the LayoutID registry.
-> These are large; they are deliberately deferred from this first draft.
+```
+[Length: 4 bytes LE]        ; counts section content only
+[LayoutID: 2 bytes LE]      ; §4.4.6
+[Page background: optional BG record | omitted if next byte is GS]   ; §4.4.5
+GS [sub-table] GS [sub-table] ...   ; 12 sub-tables in fixed order, §4.4.2
+```
+
+If Meta key 32 (Default Style Set) ≥ 1, the section may carry no records (LayoutID +
+empty GS markers, or delta overrides only). Minimum styles section: `Length = 14`,
+`LayoutID = 0x0000`, then GS × 12 (empty sub-tables).
+
+#### 4.4.1 Sub-table header byte and packed records
+
+Each sub-table begins with one header byte: bits 0–1 = **tier** (00 base, 01 extended,
+10 rare, 11 reserved → reject in Phase II); bits 2–7 = **count** 0–63 records. All
+records in a sub-table share one tier (fixed size). Records are **packed** — no RS
+between them; `record_ptr(i) = table_start + 1 + i × record_size(tier)`. An empty
+sub-table is a bare GS (a header with count 0 is also accepted). Optional style-index
+reference fields use **255 = no reference** (valid record indices are 0–62).
+
+#### 4.4.2 Sub-table order (fixed, GS-separated)
+
+| # | Sub-table | Tiered? | Record size (base / ext / rare) |
+|---|----|----|----|
+| 1 | Container Background | Yes | 6 / 12 / 20 B |
+| 2 | Container Border | No | 9 B |
+| 3 | Container Spacing | No | 4 B |
+| 4 | Container Shadow | No | 4 B |
+| 5 | Container Composite | No | 5 B |
+| 6 | Text Styles | Yes | 8 / 12 / 16 B |
+| 7 | Font Effects | No | 4 B |
+| 8 | Nav Bar Styles | No | 12 B |
+| 9 | Table Styles | No | 6 B |
+| 10 | Image Definitions | No | 8 B |
+| 11 | Frame Definitions | No | 8 B |
+| 12 | Forms | — | reserved (Phase III) |
+
+Conventions for all record layouts below: multi-byte integers are LE; colors are
+R5G6B5 or transparency codes (§4.6); extended/rare tiers extend the smaller tier
+without moving its fields; reserved bytes MUST be written 0 and ignored on read
+(decoders MUST accept non-zero reserved bytes — they are per-record compatibility
+headroom).
+
+#### 4.4.3 Record byte layouts (normative)
+
+**Text Style (6, tiers 8/12/16 B).** 0–1 FontID (§4.7); 2 font size pt (0 = inherit);
+3 flags (bit0 bold, 1 italic, 2 underline, 3 strike, 4 subscript, 5 superscript, 6–7
+alignment 0 left/1 center/2 right/3 justify); 4–5 foreground color; 6–7 background
+color. *Extended:* 8–9 text shadow packed u16 (bits0–5 signed X, 6–11 signed Y, 12–15
+blur; 0 = none); 10 letter spacing signed int8 in 0.1 em; 11 line height (0 auto, else
+÷10). *Rare:* 12 low nibble effect ID / high nibble intensity; 13 bits0–1 transform
+(0 none/1 UPPER/2 lower/3 Capitalize), bits2–3 direction (0 auto/1 LTR/2 RTL), bits4–7
+word spacing 0–15 in 0.1 em; 14–15 effect color.
+
+**Background (1, tiers 6/12/20 B).** 0–1 background color (gradient color 1 when a
+gradient is set); 2–3 background image ID u16 (0 none); 4 color opacity 0–255; 5 image
+flags (bit0 repeat-x, 1 repeat-y, 2 fixed, 3 cover, 4 contain). *Extended:* 6–7
+gradient color 2 (present iff gradient type ≠ 0); 8 gradient type (0 none/1 linear/2
+radial); 9 linear angle (value × 360/256°); 10 color-2 stop position 0–255 = 0–100%;
+11 reserved. *Rare:* 12–13 gradient color 3; 14–15 gradient color 4; 16 color-3 stop;
+17 color-4 stop; 18–19 reserved.
+
+**Border (2, 9 B).** 0–1 border color; 2–3 thickness nibbles px (byte2 top|right,
+byte3 bottom|left, 0–15 each); 4–5 outside-of-border color (or transparency); 6–8 four
+6-bit corner radii packed LSB-first (TL, TR, BR, BL; percent ≈ round(value × 50/63)).
+Line style is solid in Phase II.
+
+**Spacing (3, 4 B).** 0–1 margins (byte0 top|right, byte1 bottom|left); 2–3 padding,
+same packing. Nibble: 0 = explicit zero; 15 = inherit-from-left; 1–14 = value × 4 px.
+
+**Shadow (4, 4 B).** 0–1 shadow color; 2–3 packed u16 (bits0–5 signed X px, 6–11
+signed Y px, 12–15 blur 0–15) — same packing as Text extended 8–9.
+
+**Composite (5, 5 B).** 0 background style index (255 none); 1 border index; 2 spacing
+index; 3 shadow index; 4 bits0–1 overflow (0 visible/1 hidden/2 scroll), bits2–7
+layer_id (§4.4.4).
+
+**Font Effect (7, 4 B).** 0 effect ID; 1 intensity 0–255; 2 parameter A; 3 parameter B
+(0 = default). Effect IDs 0–15 per §4.7 (15 = custom, deterministic parameters — never
+AI). The sub-table is **keyed by Effect ID**: at most one record per ID; a duplicate ID
+makes the Styles section invalid.
+
+**Nav Bar (8, 12 B).** 0 item text style index; 1 active-item index (255 = items); 2
+hover-item index (255 = items); 3 bar background index (255 none); 4 bar border index;
+5 bar spacing index; 6 collapse breakpoint (0 never, else value × 8 px); 7 flags (bit0
+orientation 0 horiz/1 vert, bits1–2 item mode 0 text+icon/1 text/2 icon, bits3–4 align
+0 start/1 center/2 end/3 space-between); 8–11 reserved.
+
+**Table (9, 6 B).** 0 header-row text style index (255 = body); 1 body text style
+index; 2 grid border index (255 none); 3 alternate-row background index (255 = no
+stripes); 4 cell spacing index (255 = default); 5 flags (bit0 first row is header, bit1
+row stripes, bit2 column rules, bit3 row rules).
+
+**Image Definition (10, 8 B).** 0 source type (0 document resource, 1 built-in, 2
+AI-generated reserved); 1 source ID (ResourceID for type 0); 2–3 display width u16 px
+(0 natural); 4–5 display height u16 px (0 natural — always present so a client that
+skipped Resources can reserve placeholder space); 6 fit (0 contain/1 cover/2 stretch/3
+tile); 7 border style index (255 none).
+
+**Frame Definition (11, 8 B).** 0 source type (0 embedded CBDF resource, 1 QWeb ID
+reserved Phase III); 1 source ID; 2–3 width u16 px (0 auto); 4–5 height u16 px (0
+auto); 6 sandbox bits (default 0 = fully sandboxed: bit0 internal scrolling, bit1
+links, bit2 framed resources, bit3 nested frames — framed content can never execute
+Logic in Phase II); 7 border style index (255 none).
+
+Hover/event fields are declarative appearance only in Phase II (actions are Phase III
+Logic).
+
+#### 4.4.4 Layer registry (Composite `layer_id`)
+
+0 Background (behind everything); 1 Content (default flow); 2–7 Overlays (stack by ID);
+8 Disclaimer (pinned after content); 9 Debug (client-only); 10 Modal / 11 Alert
+(parsed but not auto-shown until Logic); 12–62 reserved (treat as content overlays); 63
+HTML/foreign (reserved Phase III).
+
+#### 4.4.5 Page background
+
+Immediately after LayoutID and before the first GS, an optional single BG record sets
+the page background (layer 0). If the next byte is GS, the page background is
+default/transparent.
+
+#### 4.4.6 LayoutID and the layout catalogue
+
+The Styles payload opens with a 2-byte LE **LayoutID**. Geometry and pane tables live
+in a client-side **layout catalogue** (like the font table); the wire carries only the
+ID. Each catalogue entry declares a **pane index table** and a **mobile pair** ID.
+
+| Range | Meaning |
+|----|----|
+| `0x0000`–`0x00FF` | **Compatibility page:** low byte = legacy 1-byte bitfield (bit0 header, 1 footer, 2 left, 3 right; bits4–5 main cols 1–4; bits6–7 main rows 1–4; main always implied) |
+| `0x0100`–`0x7FFF` | Standard catalogue (registry-governed) |
+| `0x8000`–`0xEFFF` | Domain / application profiles |
+| `0xF000`–`0xFFFE` | Experimental / private — not for interoperable mail |
+| `0xFFFF` | Invalid / unknown sentinel |
+
+**Canonical pane index order:** Header, Left aside, Main cells row-major (left→right,
+top→bottom), Right aside, Footer, then a centered Overlay/island pane last. Only
+existing panes consume indices; encoders open `STYLE_CONTAINER` for indices `0 ..
+pane_count−1` in ascending order.
+
+**Unknown LayoutID policy (clients MUST implement exactly this pair — no silent
+fallback, no invented geometry):** if Required-Features **bit 11** (catalog layout) is
+set → **fail closed**: show labeled plain-text extraction with a "needs newer layout
+catalogue" notice. If bit 11 is not set → render as `LayoutID 0x0000` (single main flow
+in stream order) with a notice that the intended layout is unavailable.
+
+**Starter catalogue** (`cbdf-layout-catalog-v1.json`, shipped with clients): 612 layout
+records — `0x0000`–`0x00FF` legacy (256) + `0x0100`–`0x0131` named desktop starters
+(50, e.g. `0x0101` `email-header-footer`, `0x0122` `holy-grail`, `0x012D`
+`inbox-list-detail`) + `0x0200`–`0x02FF` mobile stacks for legacy + `0x0300`–`0x0331`
+mobile stacks for named. Every desktop layout has `pair.mobile_layout_id`; mobile
+re-stacks to one column (`header → main cells → left → right → footer → overlay`);
+default breakpoint **768 CSS px**. A client MAY keep the desktop ID on the wire and
+switch rendering to the paired mobile ID at the breakpoint. Nav is content inside a
+pane (an `ITEM_BLOCK` of type 2 in the `nav_host` pane), never a layout bit. The
+registry is append-only; new IDs take the next free `0x0100+` (desktop) / `0x0300+`
+(mobile) slot. New layouts may be submitted to the standard catalogue (the source
+notes a $45 listing fee) and, in Phase III, resolved on demand via [DRD/1.0] when not
+in a client's local cache.
+
+#### 4.4.7 Logic section (Phase III)
+
+The fifth section is reserved for executable code (planned: BEAM/Elixir bytecode,
+actor/supervisor model, element CRUD via stable Element IDs, events, modal/layer
+control, form validation). In Phase II its length is always 0 and a non-zero length is
+a hard failure. Control codes `0x05`–`0x08`, `0x18`, and `0x1B` (ESCAPE) are reserved
+for Phase III (§4.5.1).
 
 ### 4.5 Text section and the control language
 
@@ -410,12 +567,15 @@ reserved for a future Phase III Parse Index.
 - **CBDF Feature-Bit registry** — bits in §4.3.3 (keys 42/43).
 - **CBDF Resource-Type registry** — §4.8.
 - **CBDF Compression-Type registry** — §4.9.
-- **Layout Catalogue** and **Font Table** — versioned **outside** the format,
-  append-only, jointly governed (CloudCoin Consortium, Perfect Money Foundation, RAIDA
-  Group); referenced here by ID + table version.
-
-> **TODO:** add the Extension-Section-ID registry and the Styles sub-table / LayoutID
-> registries when §4.4 is ported in full.
+- **CBDF Style Sub-table registry** — the 12 sub-tables and their record layouts/tiers
+  (§4.4.2–§4.4.3); **Font-Effect-ID registry** (§4.7 / §4.4.3); **Layer-ID registry**
+  (§4.4.4); allocation policy *Specification Required*.
+- **CBDF LayoutID registry** and **Layout Catalogue** (`cbdf-layout-catalog-v1.json`),
+  plus the **Font Table** — versioned **outside** the format, append-only, jointly
+  governed (CloudCoin Consortium, Perfect Money Foundation, RAIDA Group); referenced by
+  ID + table version. LayoutIDs `0xF000`–`0xFFFE` are private/experimental (never
+  interoperable mail). In Phase III, unknown LayoutIDs may be resolved via [DRD/1.0].
+- **CBDF Extension-Section-ID registry** — §4.10; ID 1 reserved (Phase III Parse Index).
 
 ## 7. References
 
