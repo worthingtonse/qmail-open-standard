@@ -19,7 +19,7 @@ inline them, so each versions on its own cadence.
 | QMail| QMail                          | [specs/qmail-1.0.md](specs/qmail-1.0.md) | Umbrella email system        |
 | RKE  | Raida Key Exchange             | [specs/rke-1.0.md](specs/rke-1.0.md)     | Key exchange / trust         |
 | DRD  | Distributed Resource Directory | [specs/drd-1.0.md](specs/drd-1.0.md)     | Locating / addressing        |
-| CBDF | Compact Binary Data Format     | [specs/cbdf-1.0.md](specs/cbdf-1.0.md)   | On-wire encoding (foundation)|
+| CBDF | Compact Binary Document Format | [specs/cbdf-1.0.md](specs/cbdf-1.0.md)   | Binary HTML/CSS replacement; encoding foundation |
 
 ```
         QMail/1.0
