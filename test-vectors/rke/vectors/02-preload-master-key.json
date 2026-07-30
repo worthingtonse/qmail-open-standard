@@ -1,0 +1,36 @@
+{
+  "vector": "preload-master-key",
+  "spec_ref": "RKE/1.0 \u00a74.3 (cmd 01)",
+  "description": "preload_master_key request body: 4-byte BE Content-Server-ID length, the CSID, NS (number of key records), then NS packed records of [KID:1][Master Secret:32], then the 3E 3E trailer. One record here.",
+  "encoding": "big-endian",
+  "envelope": "RAIDA Type 0 or Type 1 (per source)",
+  "length_bytes": 44,
+  "bytes_hex": "00000004435330310101000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f3e3e",
+  "annotated": [
+    {
+      "hex": "00 00 00 04",
+      "field": "CSID length = 4 (BE)"
+    },
+    {
+      "hex": "43 53 30 31",
+      "field": "Content Server ID = \"CS01\""
+    },
+    {
+      "hex": "01",
+      "field": "NS = 1 (number of key records; inferred field \u2014 confirm)"
+    },
+    {
+      "hex": "01",
+      "field": "record KID = 1"
+    },
+    {
+      "hex": "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F",
+      "field": "master secret (32 bytes, sample 00..1F)"
+    },
+    {
+      "hex": "3E 3E",
+      "field": "terminator 3E 3E"
+    }
+  ],
+  "note": "Master secrets MUST travel only inside an encrypted RAIDA envelope (RKE/1.0 \u00a75)."
+}

@@ -1,0 +1,39 @@
+{
+  "vector": "coin-auth-preamble",
+  "spec_ref": "RKE/1.0 \u00a74.2 (shared with QMail/1.0 \u00a74.3)",
+  "description": "The 48-byte coin-authenticated preamble the RKE overview says modern RKE requests lead with. Identical structure to the QMail shared preamble (cross-check with the QMail preamble vector). Coin identity CT=0006, DN=0, SN=42. Byte 31 is the reserved 'DV'/former-Device-ID byte (set 0).",
+  "encoding": "big-endian",
+  "length_bytes": 48,
+  "bytes_hex": "000102030405060708090a0b9270c96500000000000000000006000000002a00a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+  "annotated": [
+    {
+      "hex": "00 01 02 03 04 05 06 07 08 09 0A 0B 92 70 C9 65",
+      "field": "challenge: 12 random + BE CRC32 (0..15)"
+    },
+    {
+      "hex": "00 00 00 00 00 00 00 00",
+      "field": "session id = 0 (16..23, standard mode)"
+    },
+    {
+      "hex": "00 06",
+      "field": "coin type = 0x0006 (24..25)"
+    },
+    {
+      "hex": "00",
+      "field": "denomination = 0 (26, signed)"
+    },
+    {
+      "hex": "00 00 00 2A",
+      "field": "serial number = 42 (27..30, BE)"
+    },
+    {
+      "hex": "00",
+      "field": "reserved / DV / former Device ID (31)"
+    },
+    {
+      "hex": "A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF",
+      "field": "authenticity number (32..47)"
+    }
+  ],
+  "note": "DISCREPANCY (see RKE/1.0 \u00a74.2): the two documented command bodies below do NOT both use this preamble as-is \u2014 preload_master_key leads with a length-prefixed Content Server ID, and get_key_share uses a different 46-byte layout. Documented for the QMail cross-check and flagged for reconciliation."
+}
