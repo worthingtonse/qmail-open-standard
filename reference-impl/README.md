@@ -41,18 +41,28 @@ reference-impl/
     _io.py              big-endian primitives + a bounds-checked Reader + 3E3E trailer
     preamble.py         48-byte coin-auth preamble + RAIDA challenge (§4.2)
     messages.py         preload_master_key (§4.3) and get_key_share req/resp (§4.4)
+  drd/                  DRD/1.0 (RAIDA Group 16) codec — big-endian directory bodies
+    constants.py        command group/codes (140–146), status codes, list types, caps
+    _io.py              big-endian primitives + Reader + 3E3E trailer + RAIDA challenge
+    fee.py              exact decimal inbox fee (int64 units) + class-rejection compare (§4.3)
+    records.py          PQ coin address, user record (§4.4.1), list entry (§4.4.2)
+    messages.py         the seven commands: post/get/search/delete + list set/remove/get
   tests/
     test_vectors.py     conformance: re-encode/decode each ../test-vectors/cbdf vector
     test_codec.py       CBDF container round-trips + strict-parse rejections
     test_records.py     CBDF §4.4.3 style record layouts, byte-exact + round-trip
     test_compression.py CBDF §4.9 zlib framing + zip-bomb guard, §4.10 extensions
     test_rke_vectors.py conformance: RKE bodies vs ../test-vectors/rke, byte-exact
+    test_drd_vectors.py conformance: DRD bodies/records vs ../test-vectors/drd, byte-exact
 ```
 
-CBDF and RKE are **independent wire worlds** — CBDF is little-endian document encoding,
-RKE is big-endian RAIDA protocol bodies — so each package has its own byte-order IO and
-they never share a codec. A QMail implementation converts at the boundary. DRD and QMail
-packages will follow the same shape.
+CBDF and the RAIDA groups (RKE, DRD) are **independent wire worlds** — CBDF is
+little-endian document encoding, RKE/DRD are big-endian RAIDA protocol bodies — so each
+package has its own byte-order IO and they never share a codec. A QMail implementation
+converts at the boundary. RKE and DRD both re-implement the shared RAIDA conventions
+(big-endian, `3E 3E`, the 12+CRC32 challenge) rather than depend on each other; a future
+in-repo RAIDA-protocol module could host those primitives. The QMail package will follow
+the same shape.
 
 ## Running the tests
 
@@ -66,6 +76,7 @@ python3 tests/test_codec.py       # container round-trips + strict-parse rejecti
 python3 tests/test_records.py     # §4.4.3 style record layouts, byte-exact + round-trip
 python3 tests/test_compression.py # §4.9 zlib framing + zip-bomb guard, §4.10 extensions
 python3 tests/test_rke_vectors.py # 4/4 RKE conformance vectors, byte-exact
+python3 tests/test_drd_vectors.py # 7/7 DRD conformance vectors, byte-exact
 ```
 
 `test_vectors.py` is the interop bar: a second, independent implementation passing the
@@ -135,3 +146,30 @@ same vectors is the goal (spec §8).
   security model, unstated in source), the **preamble-vs-command-body discrepancy**
   (§4.2), the **NS** field (§4.3), and the 16-byte challenge split / 5-byte Client SN
   interpretation (§4.4).
+
+## DRD status — implemented vs. deferred
+
+**Implemented (Group 16, big-endian bodies):**
+
+- All seven command request bodies (§4.5): `post_user`, `get_user`, `search_users`,
+  `delete_user`, `list_set`, `list_remove`, `list_get` — encode and decode, each with
+  strict trailer and exact-length validation.
+- The data-bearing response payloads: the user record (`get_user`), the 1-byte-count
+  search results (`search_users`), and the 2-byte-count list (`list_get`). Success (250)
+  and error codes ride in the RAIDA response header, not these payloads.
+- Record formats: the 5-byte PQ coin address, the user record (§4.4.1), and 6-byte /
+  5-byte list entries (§4.4.2).
+- Exact-decimal **inbox fee** (`cc_to_units`/`units_to_cc`, int64 10⁻⁸-CC units, no
+  float; rejects negative and >8 fractional digits), the **signed** class-rejection
+  comparison, and signed denomination range checks (§4.3).
+- Batch-alignment enforcement: `list_set` region a multiple of 6, `list_remove` a
+  multiple of 5 (else `ERROR_COINS_NOT_DIV`); `search_users` requires ≥1 name field.
+
+**Deferred / out of scope:**
+
+- The **RAIDA header**, **encryption envelopes**, and the **status-code transport** —
+  RAIDA protocol layer; the `detect` AN-verification check is referenced, not built.
+- Server-side behavior: AN verification against the coin database, the client-driven
+  25-RAIDA write/read/repair distribution, `created_at` preservation, prefix-search
+  matching, and anti-replay caching — these are directory-server logic, not wire codec.
+- The **avatar symbol table** (256-entry client SVG set, versioned outside the format).
