@@ -1,0 +1,78 @@
+{
+  "vector": "file-type-mapping",
+  "spec_ref": "QMail/1.0 \u00a74.4",
+  "description": "The file_type byte selects a storage suffix and a CBDF role. New QMail messages MUST upload file_type=0 (private CBDF Meta) and file_type=1 (body); attachments are 10+. The concrete object bytes are CBDF vectors (see example_object); this vector fixes the type->role mapping and the Tell manifest ordering.",
+  "mapping": [
+    {
+      "file_type": 0,
+      "suffix": ".meta",
+      "role": "Private CBDF Meta (subject/preview/display)",
+      "cbdf_ref": "CBDF/1.0 \u00a74.3",
+      "example_object": "../cbdf/vectors/01-meta-only-sms.json"
+    },
+    {
+      "file_type": 1,
+      "suffix": ".qmail",
+      "role": "Body/content object (CBDF body)",
+      "cbdf_ref": "CBDF/1.0 \u00a74.1",
+      "example_object": "../cbdf/vectors/03-phase2-minimal-document.json"
+    },
+    {
+      "file_type": 2,
+      "suffix": ".style",
+      "role": "CBDF Styles section",
+      "cbdf_ref": "CBDF/1.0 \u00a74.4"
+    },
+    {
+      "file_type": 3,
+      "suffix": ".text",
+      "role": "CBDF Text section",
+      "cbdf_ref": "CBDF/1.0 \u00a74.5"
+    },
+    {
+      "file_type": 4,
+      "suffix": ".resource",
+      "role": "CBDF Resources section",
+      "cbdf_ref": "CBDF/1.0 \u00a74.8"
+    },
+    {
+      "file_type": 5,
+      "suffix": ".logic",
+      "role": "CBDF Logic section (Phase III)",
+      "cbdf_ref": "CBDF/1.0 \u00a74.4.7"
+    },
+    {
+      "file_type": "6-9",
+      "suffix": ".blob",
+      "role": "Reserved"
+    },
+    {
+      "file_type": 10,
+      "suffix": ".0.bin",
+      "role": "First attachment"
+    },
+    {
+      "file_type": "11+",
+      "suffix": ".(N-10).bin",
+      "role": "Subsequent attachments"
+    }
+  ],
+  "manifest_order": [
+    {
+      "position": 0,
+      "file_type": 0,
+      "role": "private meta (first)"
+    },
+    {
+      "position": 1,
+      "file_type": 1,
+      "role": "body (second)"
+    },
+    {
+      "position": 2,
+      "file_type": 10,
+      "role": "first attachment"
+    }
+  ],
+  "note": "The Tell manifest lists private meta first, body second, then attachments. Human-readable fields live only in file_type=0 (never in the public Tell)."
+}

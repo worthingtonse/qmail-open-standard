@@ -1,0 +1,40 @@
+{
+  "vector": "status-flow",
+  "spec_ref": "QMail/1.0 \u00a74.1, \u00a74.2, \u00a74.8",
+  "description": "The happy-path lifecycle as a command->status sequence (headers/status only; full per-command wire bytes are on the source pages).",
+  "flow": [
+    {
+      "step": 1,
+      "actor": "sender",
+      "command": "upload (70) / upload_large_page (75)",
+      "target": "each of 8 storage RAIDAs",
+      "expect": "250 STATUS_SUCCESS per stripe/page"
+    },
+    {
+      "step": 2,
+      "actor": "sender",
+      "command": "tell (71)",
+      "target": "recipient beacon RAIDA",
+      "expect": "250 if >=1 recipient delivered; else DRD-gate failure (\u00a74.5)"
+    },
+    {
+      "step": 3,
+      "actor": "recipient",
+      "command": "ping (72) [long-poll] / peek (73)",
+      "target": "beacon",
+      "expect": "250 + Tell blob(s) when mail is waiting"
+    },
+    {
+      "step": 4,
+      "actor": "recipient",
+      "command": "download (74)",
+      "target": "each storage RAIDA (parallel)",
+      "expect": "250 + 256 KB page; reassemble locally"
+    }
+  ],
+  "common_errors": {
+    "34": "ERROR_INVALID_ENCRYPTION (e.g. zero-AN preamble)",
+    "200": "ERROR_INVALID_AN (preamble AN != stored AN)",
+    "202": "ERROR_FILE_NOT_EXIST (download of an absent object)"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "vector": "tell-drd-gate",
+  "spec_ref": "QMail/1.0 \u00a74.5 (composes DRD/1.0 \u00a74.5)",
+  "description": "Per-recipient delivery decision the beacon makes against DRD data, in order: blacklist -> whitelist (free) -> class rejection -> inbox fee. With multiple recipients, allowed recipients still deliver and the Tell returns 250; only when ZERO recipients deliver does the most specific failure win.",
+  "evaluation_order": [
+    "blacklist",
+    "whitelist",
+    "class_rejection",
+    "inbox_fee"
+  ],
+  "scenarios": [
+    {
+      "case": "whitelisted sender",
+      "list": "0x00 white",
+      "outcome": "DELIVER FREE (no locker, no fee, no class check)",
+      "status": "250"
+    },
+    {
+      "case": "blacklisted sender",
+      "list": "0x01 black",
+      "outcome": "recipient skipped",
+      "status": "236 if zero deliver (ERROR_SENDER_BLACKLISTED)"
+    },
+    {
+      "case": "class-rejected (sender denom below recipient CR)",
+      "list": "none",
+      "outcome": "refused; paying more does not help",
+      "status": "237 (ERROR_SENDER_CLASS_REJECTED)"
+    },
+    {
+      "case": "fee owed, no locker supplied",
+      "list": "none",
+      "outcome": "refused",
+      "status": "169 (ERROR_PAYMENT_REQUIRED)"
+    },
+    {
+      "case": "fee owed, locker below fee",
+      "list": "none",
+      "outcome": "refused",
+      "status": "168 (ERROR_PAYMENT_INSUFFICIENT)"
+    },
+    {
+      "case": "fee owed, funded locker",
+      "list": "none",
+      "outcome": "DELIVER (fee consumed)",
+      "status": "250"
+    },
+    {
+      "case": "recipient has NO DRD record",
+      "list": "none",
+      "outcome": "default Tell fee (10 CC) applies -> needs a funded locker",
+      "status": "250 if locker funded, else 169"
+    },
+    {
+      "case": "fee lookup dependency failed",
+      "list": "n/a",
+      "outcome": "retryable; keep Tell queued",
+      "status": "167 (ERROR_PAYMENT_PROCESSING)"
+    }
+  ],
+  "zero_delivered_precedence": [
+    "236 blacklisted",
+    "237 class-rejected",
+    "168 insufficient",
+    "169 payment-required",
+    "18 ERROR_WRONG_RAIDA"
+  ],
+  "note": "Sender identity is the AN-authenticated preamble coin (unspoofable). Class-rejection uses signed denomination comparison (see DRD/1.0 \u00a74.3 / the DRD class-rejection vector)."
+}

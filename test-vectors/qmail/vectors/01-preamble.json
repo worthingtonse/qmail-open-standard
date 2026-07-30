@@ -1,0 +1,43 @@
+{
+  "vector": "qmail-preamble",
+  "spec_ref": "QMail/1.0 \u00a74.3 (shared with RKE/1.0 \u00a74.2)",
+  "description": "The 48-byte universal preamble that begins every Group 6 request body (the decrypted body's first 48 bytes; distinct from the RAIDA packet header). Coin identity CT=0006, DN=0, SN=42; byte 31 reserved (former Device ID); AN authenticated per RAIDA.",
+  "encoding": "big-endian",
+  "length_bytes": 48,
+  "bytes_hex": "000102030405060708090a0b9270c96500000000000000000006000000002a00a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+  "annotated": [
+    {
+      "hex": "00 01 02 03 04 05 06 07 08 09 0A 0B 92 70 C9 65",
+      "field": "challenge: 12 random + BE CRC32 (0..15)"
+    },
+    {
+      "hex": "00 00 00 00 00 00 00 00",
+      "field": "session id = 0 (16..23)"
+    },
+    {
+      "hex": "00 06",
+      "field": "coin type = 0x0006 (24..25)"
+    },
+    {
+      "hex": "00",
+      "field": "denomination = 0 (26)"
+    },
+    {
+      "hex": "00 00 00 2A",
+      "field": "serial number = 42 (27..30, BE)"
+    },
+    {
+      "hex": "00",
+      "field": "reserved / former Device ID (31)"
+    },
+    {
+      "hex": "A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF",
+      "field": "authenticity number (32..47)"
+    }
+  ],
+  "cross_check": {
+    "against": "../rke/vectors/01-preamble.json",
+    "result": "byte-identical",
+    "why": "QMail and RKE share one preamble structure; a conforming stack encodes the same 48 bytes for the same coin identity."
+  }
+}
