@@ -1,0 +1,5 @@
+# Python (reference-impl)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
