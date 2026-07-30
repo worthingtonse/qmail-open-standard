@@ -16,7 +16,7 @@ inline them, so each versions on its own cadence.
 
 | ID   | Name                           | Spec                              | Role                                | Wire |
 |------|--------------------------------|-----------------------------------|-------------------------------------|------|
-| QMail| QMail                          | [specs/qmail-1.0.md](specs/qmail-1.0.md) | Umbrella email system        | — |
+| QMail| QMail                          | [specs/qmail-1.0.md](specs/qmail-1.0.md) | Umbrella email system (RAIDA Group 6, store-and-forward) | RAIDA, big-endian (CBDF payload LE) |
 | RKE  | Raida Key Exchange             | [specs/rke-1.0.md](specs/rke-1.0.md)     | Remote key establishment (RAIDA Group 15) | RAIDA, big-endian |
 | DRD  | Distributed Resource Directory | [specs/drd-1.0.md](specs/drd-1.0.md)     | User directory / anti-spam gating (RAIDA Group 16) | RAIDA, big-endian |
 | CBDF | Compact Binary Document Format | [specs/cbdf-1.0.md](specs/cbdf-1.0.md)   | Binary HTML/CSS replacement; document encoding | little-endian |

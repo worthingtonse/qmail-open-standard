@@ -91,7 +91,7 @@ replay protection:
 | 24 | 2 | CT — Coin type / network id | CloudCoin = `00 06` (cf. [CBDF/1.0] mailbox coin-group) |
 | 26 | 1 | DN — Denomination | |
 | 27 | 4 | SN — Serial number | coin identity = CT ‖ DN ‖ SN (7 bytes) |
-| 31 | 1 | DV | source labels this "DV"; exact meaning not stated in source — **confirm** |
+| 31 | 1 | DV / reserved | the QMail shared preamble ([QMail/1.0] §4.3) identifies this as a **reserved** byte, formerly Device ID — server reads and ignores; set 0 |
 | 32 | 16 | AN — Authenticity Number | 16-byte coin authenticator |
 
 The coin identity `CT‖DN‖SN` (2+1+4 = 7 bytes) matches the 7-byte mailbox form in
@@ -194,8 +194,9 @@ per-request Challenge / Timestamp provide authentication and replay protection.
 - No URI scheme, media type, or port is defined by RKE itself (it rides on the RAIDA
   protocol transport).
 
-> **TODO:** register the DV field's meaning (§4.2) and the NS field (§4.3) once
-> confirmed with the implementers; reconcile the preamble discrepancy (§4.2).
+> **TODO:** confirm the NS field (§4.3) with the implementers, and reconcile the
+> preamble discrepancy (§4.2). (Byte 31 "DV" is resolved: it is the QMail shared
+> preamble's reserved/Device-ID byte — see [QMail/1.0] §4.3.)
 
 ## 7. References
 
