@@ -36,12 +36,23 @@ reference-impl/
     resources.py        Resources section: packed length-walked records (§4.8)
     compression.py      zlib Styles+Text codec + zip-bomb guard (§4.9)
     document.py         the container: framing, compression, extensions, all wire shapes (§4.1)
+  rke/                  RKE/1.0 (RAIDA Group 15) codec — big-endian key-exchange bodies
+    constants.py        command group/codes, field sizes, coin type, envelope types
+    _io.py              big-endian primitives + a bounds-checked Reader + 3E3E trailer
+    preamble.py         48-byte coin-auth preamble + RAIDA challenge (§4.2)
+    messages.py         preload_master_key (§4.3) and get_key_share req/resp (§4.4)
   tests/
     test_vectors.py     conformance: re-encode/decode each ../test-vectors/cbdf vector
-    test_codec.py       unit tests for paths the vectors don't cover
+    test_codec.py       CBDF container round-trips + strict-parse rejections
+    test_records.py     CBDF §4.4.3 style record layouts, byte-exact + round-trip
+    test_compression.py CBDF §4.9 zlib framing + zip-bomb guard, §4.10 extensions
+    test_rke_vectors.py conformance: RKE bodies vs ../test-vectors/rke, byte-exact
 ```
 
-RKE, DRD, and QMail packages will follow the same shape once CBDF is complete.
+CBDF and RKE are **independent wire worlds** — CBDF is little-endian document encoding,
+RKE is big-endian RAIDA protocol bodies — so each package has its own byte-order IO and
+they never share a codec. A QMail implementation converts at the boundary. DRD and QMail
+packages will follow the same shape.
 
 ## Running the tests
 
@@ -54,6 +65,7 @@ python3 tests/test_vectors.py     # 6/6 CBDF conformance vectors, byte-exact
 python3 tests/test_codec.py       # container round-trips + strict-parse rejections
 python3 tests/test_records.py     # §4.4.3 style record layouts, byte-exact + round-trip
 python3 tests/test_compression.py # §4.9 zlib framing + zip-bomb guard, §4.10 extensions
+python3 tests/test_rke_vectors.py # 4/4 RKE conformance vectors, byte-exact
 ```
 
 `test_vectors.py` is the interop bar: a second, independent implementation passing the
@@ -99,3 +111,27 @@ same vectors is the goal (spec §8).
   (5, Phase III): rejected with a clear error; only 0 (none) and 1 (zlib) are built.
 - The **layout catalogue** and **font table** (client-side lookup tables, versioned
   outside the format) — the codec carries the IDs; it does not resolve them.
+
+## RKE status — implemented vs. deferred
+
+**Implemented (Group 15, big-endian bodies):**
+
+- The 48-byte coin-authenticated **preamble** (§4.2) and the RAIDA **challenge** (12
+  random bytes + big-endian CRC32, with a validity check). The 7-byte CT‖DN‖SN coin
+  identity is exposed (big-endian serial — the CBDF-mailbox boundary).
+- **`preload_master_key`** request body (§4.3): CSID-length prefix, variable Content
+  Server ID, NS record count, packed `[KID][32-byte secret]` records, `3E 3E` trailer.
+- **`get_key_share`** request (§4.4, 46+2 B) and response (`[SK][3E 3E]`), with a
+  `client_sn(denom, serial)` helper for the 5-byte field.
+- Big-endian IO with bounds checks and strict trailer / trailing-byte validation.
+
+**Deferred / out of scope:**
+
+- The **RAIDA request/response header** (command group/code, routing) and the
+  **encryption envelope** (Types 0/1/5) — owned by the RAIDA protocol layer, referenced
+  by the spec, not redefined here.
+- Unresolved source items flagged in the spec and carried as raw/literal here rather
+  than invented: the **share threshold / reconstruction rule** (§5 — the crux of the
+  security model, unstated in source), the **preamble-vs-command-body discrepancy**
+  (§4.2), the **NS** field (§4.3), and the 16-byte challenge split / 5-byte Client SN
+  interpretation (§4.4).
