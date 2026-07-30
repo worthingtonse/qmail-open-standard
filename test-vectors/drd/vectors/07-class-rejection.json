@@ -1,0 +1,75 @@
+{
+  "vector": "class-rejection",
+  "spec_ref": "DRD/1.0 \u00a74.3 (enforced at the QMail/1.0 Tell gate -> 237)",
+  "description": "Class-rejection is a SIGNED denomination byte: 0x00 = accept all (default), otherwise reject senders whose address denomination is below it by signed comparison (0xFF = -1 ranks BELOW 0x00 = 0). Sender columns are address denominations -8..+6.",
+  "sender_denominations": [
+    -8,
+    -1,
+    0,
+    1,
+    2,
+    6
+  ],
+  "table": [
+    {
+      "class_rejection_byte": "0x00",
+      "class_rejection_signed": 0,
+      "results": {
+        "-8": "accept",
+        "-1": "accept",
+        "0": "accept",
+        "1": "accept",
+        "2": "accept",
+        "6": "accept"
+      }
+    },
+    {
+      "class_rejection_byte": "0x01",
+      "class_rejection_signed": 1,
+      "results": {
+        "-8": "REJECT",
+        "-1": "REJECT",
+        "0": "REJECT",
+        "1": "accept",
+        "2": "accept",
+        "6": "accept"
+      }
+    },
+    {
+      "class_rejection_byte": "0x02",
+      "class_rejection_signed": 2,
+      "results": {
+        "-8": "REJECT",
+        "-1": "REJECT",
+        "0": "REJECT",
+        "1": "REJECT",
+        "2": "accept",
+        "6": "accept"
+      }
+    },
+    {
+      "class_rejection_byte": "0xFF",
+      "class_rejection_signed": -1,
+      "results": {
+        "-8": "REJECT",
+        "-1": "accept",
+        "0": "accept",
+        "1": "accept",
+        "2": "accept",
+        "6": "accept"
+      }
+    },
+    {
+      "class_rejection_byte": "0xF8",
+      "class_rejection_signed": -8,
+      "results": {
+        "-8": "accept",
+        "-1": "accept",
+        "0": "accept",
+        "1": "accept",
+        "2": "accept",
+        "6": "accept"
+      }
+    }
+  ]
+}

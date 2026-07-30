@@ -1,0 +1,29 @@
+{
+  "vector": "list-get",
+  "spec_ref": "DRD/1.0 \u00a74.5 (cmd 146), \u00a74.4.2",
+  "description": "list_get success payload: 2-byte big-endian entry count followed by that many 6-byte entries (LDN, LSN BE, type), sorted by listed DN then SN. The count is 2 bytes because a list may hold up to 1000 entries. Empty list = count 0 with status 250.",
+  "encoding": "big-endian",
+  "response_two_entries": {
+    "length_bytes": 14,
+    "bytes_hex": "000200000000640001000000c801",
+    "annotated": [
+      {
+        "hex": "00 02",
+        "field": "entry count = 2 (BE)"
+      },
+      {
+        "hex": "00 00 00 00 64 00",
+        "field": "entry: DN 0, SN 100, whitelist"
+      },
+      {
+        "hex": "01 00 00 00 C8 01",
+        "field": "entry: DN 1, SN 200, blacklist"
+      }
+    ]
+  },
+  "response_empty": {
+    "length_bytes": 2,
+    "bytes_hex": "0000",
+    "note": "count 0; status 250 (list exists but is empty)"
+  }
+}

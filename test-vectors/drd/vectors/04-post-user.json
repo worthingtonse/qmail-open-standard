@@ -1,0 +1,64 @@
+{
+  "vector": "post-user",
+  "spec_ref": "DRD/1.0 \u00a74.5 (cmd 140)",
+  "description": "post_user request bodies (Owner AN). Minimal = both names empty (52 bytes, the documented minimum); named = Alice Smith, fee 10 CC (62 bytes). Upsert keyed by PQ; created_at is preserved by the server across updates.",
+  "encoding": "big-endian",
+  "minimal_empty_names": {
+    "length_bytes": 52,
+    "bytes_hex": "000102030405060708090a0b9270c965000000002aa0a1a2a3a4a5a6a7a8a9aaabacadaeaf000000000000000000000000003e3e"
+  },
+  "named_example": {
+    "length_bytes": 62,
+    "bytes_hex": "000102030405060708090a0b9270c965000000002aa0a1a2a3a4a5a6a7a8a9aaabacadaeaf000000003b9aca0005110005416c69636505536d6974683e3e",
+    "annotated": [
+      {
+        "hex": "00 01 02 03 04 05 06 07 08 09 0A 0B 92 70 C9 65",
+        "field": "challenge (16)"
+      },
+      {
+        "hex": "00",
+        "field": "DN = 0"
+      },
+      {
+        "hex": "00 00 00 2A",
+        "field": "SN = 42 (BE)"
+      },
+      {
+        "hex": "A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF",
+        "field": "owner AN (16)"
+      },
+      {
+        "hex": "00 00 00 00 3B 9A CA 00",
+        "field": "inbox fee = 10 CC"
+      },
+      {
+        "hex": "05 11",
+        "field": "symbols S1=5 S2=17"
+      },
+      {
+        "hex": "00",
+        "field": "class rejection = 0"
+      },
+      {
+        "hex": "05",
+        "field": "FL = 5"
+      },
+      {
+        "hex": "41 6C 69 63 65",
+        "field": "\"Alice\""
+      },
+      {
+        "hex": "05",
+        "field": "LL = 5"
+      },
+      {
+        "hex": "53 6D 69 74 68",
+        "field": "\"Smith\""
+      },
+      {
+        "hex": "3E 3E",
+        "field": "terminator 3E 3E"
+      }
+    ]
+  }
+}

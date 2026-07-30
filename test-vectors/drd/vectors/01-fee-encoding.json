@@ -1,0 +1,33 @@
+{
+  "vector": "fee-encoding",
+  "spec_ref": "DRD/1.0 \u00a74.3",
+  "description": "Inbox fee = 8-byte big-endian signed int64 counting 1e-8 CC units (fee_CC x 100,000,000). No floating point. Negative fees are rejected with ERROR_INVALID_PARAMETER (198).",
+  "encoding": "big-endian",
+  "cases": [
+    {
+      "cc": "10992.934002",
+      "units": 1099293400200,
+      "be_int64_hex": "00 00 00 FF F2 FE 1C 88"
+    },
+    {
+      "cc": "0.00000001",
+      "units": 1,
+      "be_int64_hex": "00 00 00 00 00 00 00 01"
+    },
+    {
+      "cc": "0",
+      "units": 0,
+      "be_int64_hex": "00 00 00 00 00 00 00 00"
+    },
+    {
+      "cc": "10",
+      "units": 1000000000,
+      "be_int64_hex": "00 00 00 00 3B 9A CA 00"
+    }
+  ],
+  "rejected": {
+    "cc": "-1",
+    "reason": "negative fee",
+    "status": "198 ERROR_INVALID_PARAMETER"
+  }
+}

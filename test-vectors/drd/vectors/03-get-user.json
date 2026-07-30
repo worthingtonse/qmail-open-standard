@@ -1,0 +1,82 @@
+{
+  "vector": "get-user",
+  "spec_ref": "DRD/1.0 \u00a74.5 (cmd 141), \u00a74.4.1",
+  "description": "get_user request (exactly 23 bytes, no auth) fetching DN=0 SN=42, and the success user-record response (34 + name bytes) for Alice Smith: fee 10 CC, symbols 5/17, class-rejection 0 (accept all).",
+  "encoding": "big-endian",
+  "request": {
+    "length_bytes": 23,
+    "bytes_hex": "000102030405060708090a0b9270c965000000002a3e3e",
+    "annotated": [
+      {
+        "hex": "00 01 02 03 04 05 06 07 08 09 0A 0B 92 70 C9 65",
+        "field": "challenge (12 random + BE CRC32)"
+      },
+      {
+        "hex": "00",
+        "field": "Denomination = 0 (signed; 1 CC / .bit)"
+      },
+      {
+        "hex": "00 00 00 2A",
+        "field": "Serial Number = 42 (BE)"
+      },
+      {
+        "hex": "3E 3E",
+        "field": "terminator 3E 3E"
+      }
+    ]
+  },
+  "response_user_record": {
+    "length_bytes": 44,
+    "bytes_hex": "000000002a000000003b9aca00051100000000006553f100000000006a69b30005416c69636505536d697468",
+    "annotated": [
+      {
+        "hex": "00",
+        "field": "DN = 0"
+      },
+      {
+        "hex": "00 00 00 2A",
+        "field": "SN = 42 (BE)"
+      },
+      {
+        "hex": "00 00 00 00 3B 9A CA 00",
+        "field": "inbox fee = 10 CC (BE int64, 1e-8 units)"
+      },
+      {
+        "hex": "05",
+        "field": "first symbol = 5"
+      },
+      {
+        "hex": "11",
+        "field": "second symbol = 17"
+      },
+      {
+        "hex": "00",
+        "field": "class rejection = 0 (accept all)"
+      },
+      {
+        "hex": "00 00 00 00 65 53 F1 00",
+        "field": "created_at = 1700000000 (BE Unix seconds)"
+      },
+      {
+        "hex": "00 00 00 00 6A 69 B3 00",
+        "field": "updated_at = 1785312000 (BE Unix seconds)"
+      },
+      {
+        "hex": "05",
+        "field": "first-name length = 5"
+      },
+      {
+        "hex": "41 6C 69 63 65",
+        "field": "\"Alice\""
+      },
+      {
+        "hex": "05",
+        "field": "last-name length = 5"
+      },
+      {
+        "hex": "53 6D 69 74 68",
+        "field": "\"Smith\""
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "vector": "list-set-remove",
+  "spec_ref": "DRD/1.0 \u00a74.5 (cmd 144 list_set, cmd 145 list_remove), \u00a74.4.2",
+  "description": "Two-entry batches. list_set entries are 6 bytes (LDN, LSN BE, type); list_remove entries are 5 bytes (no type). The entry region must be an exact multiple of 6 / 5 bytes respectively (else ERROR_COINS_NOT_DIV 39).",
+  "encoding": "big-endian",
+  "list_set": {
+    "length_bytes": 51,
+    "formula": "39 + 6N (N=2)",
+    "bytes_hex": "000102030405060708090a0b9270c965000000002aa0a1a2a3a4a5a6a7a8a9aaabacadaeaf00000000640001000000c8013e3e",
+    "entries": [
+      {
+        "listed_dn": 0,
+        "listed_sn": 100,
+        "type": "0x00 whitelist"
+      },
+      {
+        "listed_dn": 1,
+        "listed_sn": 200,
+        "type": "0x01 blacklist"
+      }
+    ]
+  },
+  "list_remove": {
+    "length_bytes": 49,
+    "formula": "39 + 5N (N=2)",
+    "bytes_hex": "000102030405060708090a0b9270c965000000002aa0a1a2a3a4a5a6a7a8a9aaabacadaeaf000000006401000000c83e3e",
+    "entries": [
+      {
+        "listed_dn": 0,
+        "listed_sn": 100
+      },
+      {
+        "listed_dn": 1,
+        "listed_sn": 200
+      }
+    ]
+  }
+}
