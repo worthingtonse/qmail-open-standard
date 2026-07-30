@@ -11,6 +11,11 @@ demonstrate that the specs are implementable and to run against the conformance
   RKE and DRD, then QMail.
 - **Conformance:** the implementation MUST pass the vectors in `../test-vectors/`.
 
+**Status:** all four packages are implemented and pass their conformance vectors —
+**CBDF**, **RKE**, **DRD**, and the **QMail** umbrella (50 checks across the suites; every
+byte-oriented vector matches byte-for-byte). Per-standard implemented-vs-deferred notes
+are at the end of this file.
+
 ## Toolchain
 
 **Python 3, standard library only** — no third-party dependencies, no build step. A
@@ -47,6 +52,11 @@ reference-impl/
     fee.py              exact decimal inbox fee (int64 units) + class-rejection compare (§4.3)
     records.py          PQ coin address, user record (§4.4.1), list entry (§4.4.2)
     messages.py         the seven commands: post/get/search/delete + list set/remove/get
+  qmail/                QMail/1.0 (RAIDA Group 6) umbrella — composes CBDF + RKE + DRD
+    constants.py        Group 6 commands (70–84), status codes (+DRD-gate), file_types
+    preamble.py         the 48-byte universal preamble — reused from rke (shared structure)
+    filetype.py         file_type -> suffix/CBDF-role mapping + Tell manifest order (§4.4)
+    gate.py             the Tell DRD-gate per-recipient delivery decision (§4.5)
   tests/
     test_vectors.py     conformance: re-encode/decode each ../test-vectors/cbdf vector
     test_codec.py       CBDF container round-trips + strict-parse rejections
@@ -54,15 +64,18 @@ reference-impl/
     test_compression.py CBDF §4.9 zlib framing + zip-bomb guard, §4.10 extensions
     test_rke_vectors.py conformance: RKE bodies vs ../test-vectors/rke, byte-exact
     test_drd_vectors.py conformance: DRD bodies/records vs ../test-vectors/drd, byte-exact
+    test_qmail_vectors.py conformance: QMail preamble/gate/file_type vs ../test-vectors/qmail
+    test_qmail_compose.py end-to-end: QMail composing CBDF + RKE + DRD across LE/BE
 ```
 
 CBDF and the RAIDA groups (RKE, DRD) are **independent wire worlds** — CBDF is
 little-endian document encoding, RKE/DRD are big-endian RAIDA protocol bodies — so each
-package has its own byte-order IO and they never share a codec. A QMail implementation
-converts at the boundary. RKE and DRD both re-implement the shared RAIDA conventions
-(big-endian, `3E 3E`, the 12+CRC32 challenge) rather than depend on each other; a future
-in-repo RAIDA-protocol module could host those primitives. The QMail package will follow
-the same shape.
+has its own byte-order IO and they never share a codec. **QMail** is the umbrella: it
+*composes* the three, reusing RKE's preamble and DRD's class-rejection logic (mirroring
+the standard's dependency graph) and converting between the big-endian RAIDA wire and the
+little-endian CBDF payload at the boundary. RKE and DRD each re-implement the shared RAIDA
+conventions (big-endian, `3E 3E`, the 12+CRC32 challenge) rather than depend on each
+other; a future in-repo RAIDA-protocol module could host those primitives.
 
 ## Running the tests
 
@@ -77,6 +90,8 @@ python3 tests/test_records.py     # §4.4.3 style record layouts, byte-exact + r
 python3 tests/test_compression.py # §4.9 zlib framing + zip-bomb guard, §4.10 extensions
 python3 tests/test_rke_vectors.py # 4/4 RKE conformance vectors, byte-exact
 python3 tests/test_drd_vectors.py # 7/7 DRD conformance vectors, byte-exact
+python3 tests/test_qmail_vectors.py  # 5/5 QMail vectors (preamble byte-exact + gate/file_type)
+python3 tests/test_qmail_compose.py  # 3/3 end-to-end composition across the LE/BE boundary
 ```
 
 `test_vectors.py` is the interop bar: a second, independent implementation passing the
@@ -173,3 +188,35 @@ same vectors is the goal (spec §8).
   25-RAIDA write/read/repair distribution, `created_at` preservation, prefix-search
   matching, and anti-replay caching — these are directory-server logic, not wire codec.
 - The **avatar symbol table** (256-entry client SVG set, versioned outside the format).
+
+## QMail status — implemented vs. deferred
+
+**Implemented (Group 6 umbrella):**
+
+- The 48-byte universal **preamble** (§4.3), reused from `rke` so it is byte-identical to
+  RKE's — the interop anchor the vectors assert.
+- The **file_type** object model (§4.4): file_type → storage suffix + CBDF role, the
+  attachment suffix rule (10 → `.0.bin`), and the canonical Tell manifest order (private
+  meta first, body second, attachments last).
+- The Tell **DRD gate** (§4.5): the per-recipient decision in normative order
+  (blacklist → whitelist-free → class rejection → inbox fee, with the default Tell fee for
+  unregistered recipients), and the "zero delivered → most specific failure wins"
+  aggregation. It reuses `drd.class_rejects` so the two standards cannot disagree.
+- The Group 6 command codes (70–84) and the QMail status-code subset incl. the DRD-gate
+  codes (167/168/169/236/237).
+- End-to-end composition (`test_qmail_compose.py`): a little-endian CBDF payload under
+  big-endian QMail/RKE framing, demonstrating the same coin identity encoded with a
+  big-endian serial in the preamble and a little-endian serial in the CBDF mailbox.
+
+**Deferred / out of scope:**
+
+- Full per-command **wire bodies** for upload/tell/ping/peek/download and Object Transfer
+  76–84 (routing header, per-recipient address entries, 64-byte file headers, 256 KB
+  pages, resumable byte-range framing) — the source pages carry these; the spec's §8
+  vectors fix the preamble, file_type model, and gate logic, which is the QMail-specific
+  interop surface implemented here.
+- Wire **encryption** (RAIDA 32-byte AES-128 header) and the base RAIDA packet header —
+  RAIDA protocol layer.
+- The erasure-coding **stripe** split/reassembly (7+1) and beacon/storage server logic.
+- **RKE ↔ QMail integration point** (§4.7) — unresolved in the source and flagged in the
+  spec; not assumed here (Group 6 auth uses the coin AN, not RKE directly).
