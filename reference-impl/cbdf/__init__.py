@@ -23,6 +23,11 @@ from .color import (
 )
 from .meta import MetaSection, mailbox, parse_mailbox
 from .styles import StylesSection, SubTable
+from . import records
+from .records import (
+    TextStyle, Background, Border, Spacing, Shadow, Composite, FontEffect,
+    NavBar, Table, ImageDef, FrameDef, decode_record,
+)
 from .resources import Resource
 from . import text
 from .text import extract_plaintext, frame_body
@@ -34,6 +39,9 @@ __all__ = [
     "TRANSPARENCY", "RESERVED_SAFE_CODE",
     "MetaSection", "mailbox", "parse_mailbox",
     "StylesSection", "SubTable",
+    "records", "decode_record",
+    "TextStyle", "Background", "Border", "Spacing", "Shadow", "Composite",
+    "FontEffect", "NavBar", "Table", "ImageDef", "FrameDef",
     "Resource",
     "text", "extract_plaintext", "frame_body",
     "Document", "parse", "encode_phase1_body",

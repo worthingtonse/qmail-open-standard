@@ -45,6 +45,30 @@ class SubTable:
             raise CBDFError(f"sub-table '{name}' tier {self.tier} record must be "
                             f"{size} bytes, got {len(rec)}")
 
+    @classmethod
+    def of(cls, records) -> "SubTable":
+        """Build a sub-table from typed record objects (see `records.py`).
+
+        Infers the sub-table index from the record class and the shared tier from the
+        records themselves (all records in a sub-table share one tier, §4.4.1).
+        """
+        records = list(records)
+        if not records:
+            raise CBDFError("SubTable.of needs at least one record; use SubTable(index) "
+                            "for an empty table")
+        index = type(records[0]).TABLE_INDEX
+        tiers = {getattr(r, "tier", 0) for r in records}
+        if len(tiers) != 1:
+            raise CBDFError("all records in a sub-table must share one tier (§4.4.1)")
+        if any(type(r).TABLE_INDEX != index for r in records):
+            raise CBDFError("all records in a sub-table must be the same record type")
+        return cls(index, tiers.pop(), [r.pack() for r in records])
+
+    def typed(self):
+        """Decode this sub-table's raw records into typed record objects (§4.4.3)."""
+        from .records import decode_record
+        return [decode_record(self.table_index, rec) for rec in self.records]
+
     @property
     def is_empty(self) -> bool:
         return not self.records

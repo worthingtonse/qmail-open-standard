@@ -31,6 +31,7 @@ reference-impl/
     color.py            R5G6B5 pack/unpack + reserved transparency codes (§4.6)
     meta.py             Meta section + 7-byte mailbox encode/decode (§4.3, §4.3.5)
     styles.py           Styles section: LayoutID + 12 GS-separated sub-tables (§4.4)
+    records.py          field-level encoders for the 12 style record layouts (§4.4.3)
     text.py             Text framing + plain-text extraction / degrade-to-text (§4.5)
     resources.py        Resources section: packed length-walked records (§4.8)
     document.py         the container: 5-section framing + all three wire shapes (§4.1)
@@ -49,7 +50,8 @@ No framework needed — each file is a self-contained runner (they are also impo
 ```
 cd reference-impl
 python3 tests/test_vectors.py     # 6/6 CBDF conformance vectors, byte-exact
-python3 tests/test_codec.py       # round-trips + strict-parse rejections
+python3 tests/test_codec.py       # container round-trips + strict-parse rejections
+python3 tests/test_records.py     # §4.4.3 style record layouts, byte-exact + round-trip
 ```
 
 `test_vectors.py` is the interop bar: a second, independent implementation passing the
@@ -63,9 +65,13 @@ same vectors is the goal (spec §8).
   and the five-section Phase II container with canonical empty `FS 00000000` tails.
 - Meta section: full key registry, repeated keys, 7-byte CloudCoin mailbox, retired-key
   (34) refusal, and the meta-only forbidden-key rule (§4.3.2).
-- Styles section: **structural** codec — LayoutID plus twelve fixed-order sub-tables
-  with header-byte (tier + count) framing and packed fixed-size records (sizes per
-  §4.4.2). Record interiors are carried as opaque bytes and round-trip exactly.
+- Styles section: LayoutID plus twelve fixed-order sub-tables with header-byte
+  (tier + count) framing and packed fixed-size records (§4.4.2).
+- All twelve style **record layouts** of §4.4.3 as field-level types (`records.py`):
+  bitfields, nibble-packed spacing/thickness, 6-bit corner radii, the signed-6-bit
+  shadow triple, and the tiered Text Style (8/12/16) and Background (6/12/20) forms.
+  `SubTable.of([...])` builds a sub-table from typed records; `SubTable.typed()` decodes
+  raw records back. Reserved bytes are written 0 and ignored (non-zero accepted) on read.
 - R5G6B5 color: pack/unpack with §4.6 rounding, the five transparency codes, and the
   reserved-band → `0x0011` diversion rule.
 - Text: STX/ETX framing and the normative plain-text extraction (strict + degraded),
@@ -76,11 +82,11 @@ same vectors is the goal (spec §8).
 
 **Deferred (tracked, not yet built):**
 
-- Per-field encoders/decoders for the twelve style **record** layouts of §4.4.3 (the
-  structural codec frames them; it does not yet interpret their fields).
-- The optional **page-background** record (§4.4.5): encode accepts pre-framed bytes;
-  decode of a non-GS byte after the LayoutID is not yet supported (its on-wire size is
-  not self-describing — needs the §4.4.3 background record decoder above).
+- The optional **page-background** record (§4.4.5): encode accepts pre-framed bytes,
+  but decode is not supported because a lone BG record's tier (6/12/20 B) is not
+  self-describing on the wire — the size cannot be recovered without an out-of-band
+  signal. This is a genuine spec gap worth raising before 1.0, not an implementation
+  shortcut. (The §4.4.3 `Background` type can pack/unpack the record given its tier.)
 - **Compression** (Meta key 31 ≠ 0, §4.9): this codec emits and accepts uncompressed
   documents only.
 - **Extension sections** (§4.10) after Logic.
