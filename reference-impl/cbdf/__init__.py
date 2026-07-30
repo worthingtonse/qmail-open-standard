@@ -31,6 +31,7 @@ from .records import (
 from .resources import Resource
 from . import text
 from .text import extract_plaintext, frame_body
+from . import compression
 from .document import Document, parse, encode_phase1_body
 
 __all__ = [
@@ -44,6 +45,7 @@ __all__ = [
     "FontEffect", "NavBar", "Table", "ImageDef", "FrameDef",
     "Resource",
     "text", "extract_plaintext", "frame_body",
+    "compression",
     "Document", "parse", "encode_phase1_body",
 ]
 

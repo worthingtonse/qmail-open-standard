@@ -1,21 +1,24 @@
 """The CBDF document container: the five-section framing and its three wire shapes (§4.1).
 
 A Phase II document is:
-    [Meta] FS [Styles] FS [Text] FS [Resources] FS [Logic]
-with a 4-byte LE length prefix on sections 2-5 (Meta uses its own KV framing). Two other
-shapes exist and are handled here too:
+    [Meta] FS [Styles] FS [Text] FS [Resources] FS [Logic]  [FS extension sections...]
+with a 4-byte LE length prefix on sections 2-5 (Meta uses its own KV framing). When Meta
+key 31 (compression) is non-zero, the Styles and Text sections are replaced by a single
+compressed blob (§4.9):
+    [Meta] FS [CompLen:4][DecompLen:4][compressed] FS [Resources] FS [Logic]
+whose decompressed contents are `[StylesLen][Styles] FS [TextLen][Text]`.
+
+Two other shapes are handled here too:
   * meta-only (Meta key 33 = 1): the Meta section stands alone, no FS markers (§4.1);
   * Phase I body object: `FS FS STX [plain text ... EOF]` (§4.2, §5).
-
-Compression (key 31) is not yet implemented; this codec emits and accepts only
-uncompressed (key 31 absent or 0) documents. See reference-impl/README.md.
 """
 from ._io import u32, CBDFError, Reader
-from .constants import FS, STX, Meta as K, VERSION_PHASE_II
+from .constants import FS, STX, Meta as K, VERSION_PHASE_II, COMPRESS_NONE, COMPRESS_ZLIB
 from .meta import MetaSection
 from .styles import StylesSection
 from . import text as textmod
 from . import resources as resmod
+from . import compression as compmod
 
 
 # --- Phase I body object (§4.2, §5) --------------------------------------------------
@@ -34,17 +37,24 @@ class Document:
 
     `meta` MUST set key 30 = 1 (Phase II) unless it is meta-only (key 33 = 1). The
     canonical encode always emits the Resources and Logic tails, empty as `FS 00000000`.
+    Compression is selected by Meta key 31 (0 none, 1 zlib); `extensions` is a list of
+    `(section_id, payload)` appended after Logic (§4.10).
     """
 
     def __init__(self, meta: MetaSection, styles: StylesSection = None,
                  text_body: bytes = b"", resources=None, styled_subject: bytes = b"",
-                 logic: bytes = b""):
+                 logic: bytes = b"", extensions=None):
         self.meta = meta
         self.styles = styles if styles is not None else StylesSection.minimal()
         self.text_body = bytes(text_body)
         self.styled_subject = bytes(styled_subject)
         self.resources = list(resources) if resources else []
         self.logic = bytes(logic)
+        self.extensions = list(extensions) if extensions else []
+
+    def _codec(self) -> int:
+        v = self.meta.get(K.COMPRESSION)
+        return 0 if v is None else v[0]
 
     def encode(self) -> bytes:
         self.meta.validate()
@@ -52,21 +62,38 @@ class Document:
             # Meta stands alone; no FS markers or sections follow (§4.1).
             return self.meta.encode()
 
-        if self.meta.get(K.COMPRESSION) not in (None, bytes([0])):
-            raise CBDFError("compression (key 31 != 0) is not supported by this "
-                            "reference codec yet")
+        codec = self._codec()
+        if not compmod.is_supported(codec):
+            raise CBDFError(f"compression codec {codec} is not supported by this codec")
+        if codec != COMPRESS_NONE and self.meta.has(K.TEXT_OFFSET):
+            raise CBDFError("Meta key 40 (Text Offset) MUST be absent when key 31 != 0")
         if self.logic:
             raise CBDFError("Logic section MUST be empty in Phase II (§4.4.7)")
 
+        styles_payload = self.styles.encode()
+        text_payload = textmod.frame_body(self.text_body, self.styled_subject)
+
         out = bytearray(self.meta.encode())
-        out.append(FS)
-        out += self.styles.encode_section()
-        out.append(FS)
-        out += textmod.encode_section(self.text_body, self.styled_subject)
+        if codec == COMPRESS_NONE:
+            out.append(FS)
+            out += u32(len(styles_payload)) + styles_payload
+            out.append(FS)
+            out += u32(len(text_payload)) + text_payload
+        else:
+            inner = (u32(len(styles_payload)) + styles_payload + bytes([FS])
+                     + u32(len(text_payload)) + text_payload)
+            comp = compmod.compress(inner, codec)
+            out.append(FS)
+            out += u32(len(comp)) + u32(len(inner)) + comp
         out.append(FS)
         out += resmod.encode_section(self.resources)
         out.append(FS)
         out += u32(len(self.logic)) + self.logic  # canonical empty tail: FS 00 00 00 00
+        for section_id, payload in self.extensions:
+            if not 0 <= section_id <= 255:
+                raise CBDFError(f"extension section id out of range: {section_id}")
+            out.append(FS)
+            out += bytes([section_id]) + u32(len(payload)) + bytes(payload)
         return bytes(out)
 
 
@@ -105,12 +132,28 @@ def parse(data: bytes) -> dict:
     if version != bytes([VERSION_PHASE_II]):
         raise CBDFError(f"unsupported wire version {list(version)}; this codec "
                         f"implements Phase II (version 1) only")
-    if meta.get(K.COMPRESSION) not in (None, bytes([0])):
-        raise CBDFError("compressed documents (key 31 != 0) are not supported yet")
 
-    styles = StylesSection.decode(_read_section(r))
+    codec_v = meta.get(K.COMPRESSION)
+    codec = 0 if codec_v is None else codec_v[0]
+    if not compmod.is_supported(codec):
+        raise CBDFError(f"compression codec {codec} is not supported by this codec")
 
-    text_payload = _read_section(r)
+    if codec == COMPRESS_NONE:
+        styles = StylesSection.decode(_read_section(r))
+        text_payload = _read_section(r)
+    else:
+        r.expect(FS, "FS before compressed Styles+Text blob")
+        comp_len = r.u32()
+        decomp_len = r.u32()
+        comp = r.take(comp_len)
+        inner = compmod.decompress(comp, codec, decomp_len)
+        ir = Reader(inner)
+        styles = StylesSection.decode(ir.take(ir.u32()))
+        ir.expect(FS, "FS between Styles and Text inside the compressed blob")
+        text_payload = ir.take(ir.u32())
+        if not ir.at_end():
+            raise CBDFError("trailing bytes inside the decompressed Styles+Text blob")
+
     if not text_payload or text_payload[0] != STX or text_payload[-1] != textmod.ETX:
         raise CBDFError("Text section must be framed by STX ... ETX (§4.5)")
 
@@ -120,14 +163,19 @@ def parse(data: bytes) -> dict:
     if logic:
         raise CBDFError("non-zero Logic length in a v1 document is a hard failure (§4.4.7)")
 
-    if not r.at_end():
-        raise CBDFError(f"trailing bytes after Logic section at offset {r.pos} "
-                        "(extension sections not yet implemented, §4.10)")
+    extensions = []
+    while not r.at_end():
+        r.expect(FS, "FS before extension section")
+        section_id = r.byte()
+        length = r.u32()
+        extensions.append((section_id, r.take(length)))
 
     return {
         "kind": "phase2",
         "meta": meta,
+        "compression": codec,
         "styles": styles,
         "text_payload": text_payload,
         "resources": resources,
+        "extensions": extensions,
     }

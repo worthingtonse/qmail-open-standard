@@ -34,7 +34,8 @@ reference-impl/
     records.py          field-level encoders for the 12 style record layouts (§4.4.3)
     text.py             Text framing + plain-text extraction / degrade-to-text (§4.5)
     resources.py        Resources section: packed length-walked records (§4.8)
-    document.py         the container: 5-section framing + all three wire shapes (§4.1)
+    compression.py      zlib Styles+Text codec + zip-bomb guard (§4.9)
+    document.py         the container: framing, compression, extensions, all wire shapes (§4.1)
   tests/
     test_vectors.py     conformance: re-encode/decode each ../test-vectors/cbdf vector
     test_codec.py       unit tests for paths the vectors don't cover
@@ -52,6 +53,7 @@ cd reference-impl
 python3 tests/test_vectors.py     # 6/6 CBDF conformance vectors, byte-exact
 python3 tests/test_codec.py       # container round-trips + strict-parse rejections
 python3 tests/test_records.py     # §4.4.3 style record layouts, byte-exact + round-trip
+python3 tests/test_compression.py # §4.9 zlib framing + zip-bomb guard, §4.10 extensions
 ```
 
 `test_vectors.py` is the interop bar: a second, independent implementation passing the
@@ -77,8 +79,14 @@ same vectors is the goal (spec §8).
 - Text: STX/ETX framing and the normative plain-text extraction (strict + degraded),
   with every control code's self-delimiting skip length (§4.5.2).
 - Resources: packed, length-walked records with per-document ID-uniqueness.
+- Compression (§4.9): the mandatory DEFLATE/zlib codec (key 31 = 1) over the combined
+  Styles+Text blob, in the `FS [CompLen][DecompLen][data]` framing with the inter-section
+  FS carried inside the blob; decode is bounded by DecompLen and an absolute cap
+  (zip-bomb resistance) and verifies the decompressed size exactly.
+- Extension sections (§4.10): `FS [SectionID:1][Len:4]` after Logic, round-tripped;
+  unknown IDs are skipped by length.
 - Strict parsing (§5): bounds-checked reads (truncation is an error, never a silent
-  slice), reserved-tier rejection, non-zero Logic rejection.
+  slice), reserved-tier rejection, non-zero Logic rejection, key-40/key-31 conflict.
 
 **Deferred (tracked, not yet built):**
 
@@ -87,8 +95,7 @@ same vectors is the goal (spec §8).
   self-describing on the wire — the size cannot be recovered without an out-of-band
   signal. This is a genuine spec gap worth raising before 1.0, not an implementation
   shortcut. (The §4.4.3 `Background` type can pack/unpack the record given its tier.)
-- **Compression** (Meta key 31 ≠ 0, §4.9): this codec emits and accepts uncompressed
-  documents only.
-- **Extension sections** (§4.10) after Logic.
+- Optional non-default compression codecs **LZ4/Zstd/Brotli** (keys 2-4) and **semantic**
+  (5, Phase III): rejected with a clear error; only 0 (none) and 1 (zlib) are built.
 - The **layout catalogue** and **font table** (client-side lookup tables, versioned
   outside the format) — the codec carries the IDs; it does not resolve them.

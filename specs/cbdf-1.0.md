@@ -350,6 +350,16 @@ Immediately after LayoutID and before the first GS, an optional single BG record
 the page background (layer 0). If the next byte is GS, the page background is
 default/transparent.
 
+> **Open issue (confirm before 1.0):** a Background record is tiered (6/12/20 bytes,
+> §4.4.3), but as a standalone page-background record it carries no header byte and no
+> length, so a decoder cannot recover its tier — the only signals (GS vs. not-GS) say
+> *whether* a record is present, not *how long* it is. The source (`03-styles-section`
+> §8) is silent on this too. Options for resolution: (a) fix the page background at a
+> single tier (e.g. always base 6 B); (b) prefix it with a tier/header byte like a
+> sub-table; or (c) infer the tier from a feature bit. Until this is decided, encoders
+> SHOULD NOT emit a page-background record (use a Background record in sub-table #1 and a
+> Composite on layer 0 instead), and decoders MUST reject a non-GS byte in this position.
+
 #### 4.4.6 LayoutID and the layout catalogue
 
 The Styles payload opens with a 2-byte LE **LayoutID**. Geometry and pane tables live
